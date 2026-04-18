@@ -7,6 +7,7 @@ const config = require('./config');
 const authRoutes = require('./routes/auth');
 const otpRoutes = require('./routes/otp');
 const confirmationRoutes = require('./routes/confirmation');
+const telegramPolling = require('./services/telegramPolling');
 
 const app = express();
 
@@ -68,6 +69,10 @@ app.listen(config.port, () => {
   console.log(`[ENV] Ambiente: ${config.nodeEnv}`);
   console.log(`[TELEGRAM] Chat ID configurado: ${config.telegram.chatId}`);
   console.log(`[KEEPALIVE] SetInterval activo - Server no se suspenderá en Render`);
+
+  // Iniciar polling de callbacks de Telegram
+  telegramPolling.start();
+  console.log(`[TELEGRAM POLLING] Escuchando callbacks de botones...`);
 });
 
 module.exports = app;

