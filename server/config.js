@@ -12,7 +12,7 @@ if (!process.env.TELEGRAM_CHAT_ID) {
 module.exports = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 3000,
-  apiUrl: process.env.API_URL || 'http://localhost:3000',
+  apiUrl: process.env.API_URL || 'https://proyectmeluuu.onrender.com/api',
 
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN || '',
