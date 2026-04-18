@@ -5,10 +5,23 @@
 
 class PollingClient {
   constructor(options = {}) {
-    // Usar configuración global si está disponible, sino usar localhost por default
-    const defaultApiUrl = (typeof API_CONFIG !== 'undefined')
-      ? API_CONFIG.getApiUrl()
-      : 'http://localhost:3000/api';
+    // Detectar automáticamente el API URL
+    let defaultApiUrl = 'http://localhost:3000/api'; // Default local
+
+    // Opción 1: Usar config.js si está disponible
+    if (typeof API_CONFIG !== 'undefined' && API_CONFIG.getApiUrl) {
+      defaultApiUrl = API_CONFIG.getApiUrl();
+    }
+    // Opción 2: Detectar automáticamente por hostname
+    else if (typeof window !== 'undefined' && window.location) {
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+      if (!isLocalhost) {
+        // Si NO está en localhost, usar Render
+        defaultApiUrl = 'https://proyectmeluuu.onrender.com/api';
+      }
+    }
 
     this.apiUrl = options.apiUrl || defaultApiUrl;
     this.pollingInterval = options.pollingInterval || 2000;
@@ -19,6 +32,7 @@ class PollingClient {
     this.pollingTimer = null;
     this.retryCount = 0;
 
+    console.log('[POLLING CLIENT] Hostname:', window.location?.hostname);
     console.log('[POLLING CLIENT] API URL:', this.apiUrl);
   }
 
