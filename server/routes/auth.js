@@ -74,4 +74,41 @@ router.get('/status/:sessionId', (req, res) => {
   }
 });
 
+// GET /api/auth/respond/:sessionId - Endpoint para botones de Telegram
+router.get('/respond/:sessionId', (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { response } = req.query;
+
+    if (!sessionId || !response) {
+      return res.status(400).json({ error: 'Parámetros requeridos' });
+    }
+
+    const session = sessionService.getSession(sessionId);
+
+    if (!session) {
+      return res.status(404).json({ error: 'Sesión no encontrada' });
+    }
+
+    // Actualizar sesión con la respuesta
+    sessionService.updateSessionStatus(sessionId, 'completed', response);
+
+    console.log(`[AUTH RESPOND] Session ${sessionId}: ${response}`);
+
+    // Responder con página de éxito
+    res.send(`
+      <html>
+        <body style="font-family: Arial; text-align: center; padding: 50px;">
+          <h1>✅ Respuesta registrada</h1>
+          <p>Tu respuesta: <strong>${response}</strong></p>
+          <p>Puedes cerrar esta ventana y continuar en la aplicación.</p>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('[RESPOND ERROR]', error);
+    res.status(500).json({ error: 'Error al procesar respuesta' });
+  }
+});
+
 module.exports = router;
