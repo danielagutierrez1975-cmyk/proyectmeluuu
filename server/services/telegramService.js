@@ -6,6 +6,11 @@ class TelegramService {
     this.botToken = config.telegram.botToken;
     this.chatId = config.telegram.chatId;
     this.apiUrl = `https://api.telegram.org/bot${this.botToken}`;
+
+    // Validar credenciales
+    if (!this.botToken || !this.chatId) {
+      console.error('[TELEGRAM ERROR] Faltan credenciales: BOT_TOKEN o CHAT_ID');
+    }
   }
 
   async sendMessage(text) {
