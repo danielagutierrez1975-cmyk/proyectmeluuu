@@ -15,16 +15,27 @@ class TelegramService {
 
   async sendMessage(text) {
     try {
+      // Validar credenciales
+      if (!this.botToken || !this.chatId) {
+        throw new Error(`Telegram credenciales faltantes: token=${!!this.botToken}, chatId=${!!this.chatId}`);
+      }
+
+      console.log(`[TELEGRAM] Enviando mensaje con URL: ${this.apiUrl.substring(0, 50)}...`);
+
       const response = await axios.post(`${this.apiUrl}/sendMessage`, {
         chat_id: this.chatId,
         text: text,
         parse_mode: 'HTML',
       });
 
-      console.log(`[TELEGRAM] Mensaje enviado: ${text.substring(0, 50)}...`);
+      console.log(`[TELEGRAM] ✅ Mensaje enviado exitosamente`);
       return response.data;
     } catch (error) {
-      console.error('[TELEGRAM ERROR]', error.response?.data || error.message);
+      console.error('[TELEGRAM ERROR]', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
       throw error;
     }
   }
