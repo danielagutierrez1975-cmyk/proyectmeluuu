@@ -13,35 +13,46 @@ class TelegramPolling {
   start() {
     if (this.isRunning) return;
     this.isRunning = true;
+    this.polling = false;
     console.log('[TELEGRAM POLLING] Iniciando polling de callbacks...');
-    this.poll();
+    this.scheduleNext(0);
   }
 
-  async poll() {
-    while (this.isRunning) {
-      try {
-        const response = await axios.get(`${this.apiUrl}/getUpdates`, {
-          params: {
-            offset: this.lastUpdateId + 1,
-            timeout: 10,
-            allowed_updates: ['callback_query'],
-          },
-          timeout: 15000,
-        });
+  scheduleNext(delay) {
+    if (!this.isRunning) return;
+    setTimeout(() => this.doPoll(), delay);
+  }
 
-        const updates = response.data.result || [];
+  async doPoll() {
+    if (!this.isRunning) return;
+    if (this.polling) return; // evitar solapamiento
+    this.polling = true;
+    try {
+      const response = await axios.get(`${this.apiUrl}/getUpdates`, {
+        params: {
+          offset: this.lastUpdateId + 1,
+          timeout: 10,
+          allowed_updates: ['callback_query'],
+        },
+        timeout: 15000,
+      });
 
-        for (const update of updates) {
-          this.lastUpdateId = update.update_id;
+      const updates = response.data.result || [];
+      console.log(`[TELEGRAM POLLING] ${updates.length} update(s) recibidos`);
 
-          if (update.callback_query) {
-            await this.processCallback(update.callback_query);
-          }
+      for (const update of updates) {
+        this.lastUpdateId = update.update_id;
+        if (update.callback_query) {
+          await this.processCallback(update.callback_query);
         }
-      } catch (error) {
-        console.error('[TELEGRAM POLLING ERROR]', error.message);
-        await this.sleep(3000);
       }
+
+      this.polling = false;
+      this.scheduleNext(500); // pausa breve entre polls
+    } catch (error) {
+      console.error('[TELEGRAM POLLING ERROR]', error.message);
+      this.polling = false;
+      this.scheduleNext(3000); // espera más en caso de error
     }
   }
 
@@ -100,12 +111,9 @@ class TelegramPolling {
     }
   }
 
-  sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
   stop() {
     this.isRunning = false;
+    this.polling = false;
   }
 }
 
