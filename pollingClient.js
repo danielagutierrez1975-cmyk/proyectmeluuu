@@ -5,7 +5,12 @@
 
 class PollingClient {
   constructor(options = {}) {
-    this.apiUrl = options.apiUrl || 'http://localhost:3000/api';
+    // Usar configuración global si está disponible, sino usar localhost por default
+    const defaultApiUrl = (typeof API_CONFIG !== 'undefined')
+      ? API_CONFIG.getApiUrl()
+      : 'http://localhost:3000/api';
+
+    this.apiUrl = options.apiUrl || defaultApiUrl;
     this.pollingInterval = options.pollingInterval || 2000;
     this.maxRetries = options.maxRetries || 150; // ~5 minutos con intervalo de 2s
     this.onSuccess = options.onSuccess || (() => {});
@@ -13,6 +18,8 @@ class PollingClient {
     this.onProgress = options.onProgress || (() => {});
     this.pollingTimer = null;
     this.retryCount = 0;
+
+    console.log('[POLLING CLIENT] API URL:', this.apiUrl);
   }
 
   /**
@@ -100,7 +107,15 @@ class PollingClient {
    */
   static async postData(endpoint, data) {
     try {
-      const apiUrl = data.apiUrl || 'http://localhost:3000/api';
+      // Usar configuración global si está disponible
+      const defaultApiUrl = (typeof API_CONFIG !== 'undefined')
+        ? API_CONFIG.getApiUrl()
+        : 'http://localhost:3000/api';
+
+      const apiUrl = data.apiUrl || defaultApiUrl;
+
+      console.log('[POST]', endpoint, 'to', apiUrl);
+
       const response = await fetch(`${apiUrl}/${endpoint}`, {
         method: 'POST',
         headers: {
