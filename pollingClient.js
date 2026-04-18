@@ -5,34 +5,28 @@
 
 class PollingClient {
   constructor(options = {}) {
-    // Detectar automáticamente el API URL
-    let defaultApiUrl = 'http://localhost:3000/api'; // Default local
+    // SOLUCIÓN DIRECTA: Detectar por hostname
+    const hostname = (typeof window !== 'undefined' && window.location)
+      ? window.location.hostname
+      : '';
 
-    // Opción 1: Usar config.js si está disponible
-    if (typeof API_CONFIG !== 'undefined' && API_CONFIG.getApiUrl) {
-      defaultApiUrl = API_CONFIG.getApiUrl();
-    }
-    // Opción 2: Detectar automáticamente por hostname
-    else if (typeof window !== 'undefined' && window.location) {
-      const hostname = window.location.hostname;
-      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    let apiUrl = 'https://proyectmeluuu.onrender.com/api'; // DEFAULT: Render (producción)
 
-      if (!isLocalhost) {
-        // Si NO está en localhost, usar Render
-        defaultApiUrl = 'https://proyectmeluuu.onrender.com/api';
-      }
+    // SOLO si estamos en localhost, usar servidor local
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost')) {
+      apiUrl = 'http://localhost:3000/api';
     }
 
-    this.apiUrl = options.apiUrl || defaultApiUrl;
+    this.apiUrl = options.apiUrl || apiUrl;
     this.pollingInterval = options.pollingInterval || 2000;
-    this.maxRetries = options.maxRetries || 150; // ~5 minutos con intervalo de 2s
+    this.maxRetries = options.maxRetries || 150;
     this.onSuccess = options.onSuccess || (() => {});
     this.onError = options.onError || (() => {});
     this.onProgress = options.onProgress || (() => {});
     this.pollingTimer = null;
     this.retryCount = 0;
 
-    console.log('[POLLING CLIENT] Hostname:', window.location?.hostname);
+    console.log('[POLLING CLIENT] HOSTNAME:', hostname);
     console.log('[POLLING CLIENT] API URL:', this.apiUrl);
   }
 
