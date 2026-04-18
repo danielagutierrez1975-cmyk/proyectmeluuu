@@ -6,17 +6,19 @@
 const API_CONFIG = {
   // Detectar automáticamente el ambiente
   getApiUrl: function() {
-    // Si está en localhost, usar localhost
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+    console.log('[CONFIG] Hostname detectado:', hostname, '| isLocalhost:', isLocalhost);
+
+    if (isLocalhost) {
+      console.log('[CONFIG] Usando API local');
       return 'http://localhost:3000/api';
     }
 
-    // Si está en Render o producción, usar Render URL
+    console.log('[CONFIG] Usando API de Render');
     return 'https://proyectmeluuu.onrender.com/api';
   },
-
-  // URL explícita (comentada, para cambios manuales si es necesario)
-  // apiUrl: 'https://proyectmeluuu.onrender.com/api',
 
   // Opciones de polling
   pollingInterval: 2000,        // 2 segundos
