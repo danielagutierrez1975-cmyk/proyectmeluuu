@@ -33,18 +33,14 @@
 
       // Iniciar polling
       const poller = new PollingClient({
-        apiUrl: 'http://localhost:3000/api',
         pollingInterval: 2000,
         onSuccess: (data) => {
           loader.hide();
           console.log('[CONFIRMATION] Completado:', data.response);
-          // Flujo completado exitosamente
-          alert('¡Pago completado exitosamente!');
         },
         onError: (error) => {
           loader.hide();
           console.error('[CONFIRMATION ERROR]', error);
-          alert('Error en el procesamiento. Intenta nuevamente.');
         },
       });
 
