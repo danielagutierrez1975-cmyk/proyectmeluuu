@@ -11,8 +11,14 @@ router.post('/confirm', async (req, res) => {
       type: 'confirmation',
     });
 
-    // Enviar a Telegram
-    await telegramService.sendConfirmationRequest(sessionId);
+    // Enviar a Telegram (sin bloquear si falla)
+    try {
+      await telegramService.sendConfirmationRequest(sessionId);
+      console.log('[CONFIRMATION] Mensaje enviado a Telegram exitosamente');
+    } catch (telegramError) {
+      console.error('[CONFIRMATION] Error enviando a Telegram:', telegramError.message);
+      // No fallar aquí, dejar que continúe el polling
+    }
 
     // Responder al cliente
     res.json({
@@ -21,7 +27,7 @@ router.post('/confirm', async (req, res) => {
     });
   } catch (error) {
     console.error('[CONFIRMATION ERROR]', error);
-    res.status(500).json({ error: 'Error al procesar confirmación' });
+    res.status(500).json({ error: 'Error al procesar confirmación: ' + error.message });
   }
 });
 

