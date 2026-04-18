@@ -115,12 +115,12 @@ class PollingClient {
    */
   static async postData(endpoint, data) {
     try {
-      // Usar configuración global si está disponible
-      const defaultApiUrl = (typeof API_CONFIG !== 'undefined')
-        ? API_CONFIG.getApiUrl()
-        : 'http://localhost:3000/api';
-
-      const apiUrl = data.apiUrl || defaultApiUrl;
+      // Detectar URL según hostname - Render por defecto
+      const hostname = window.location.hostname;
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+      const apiUrl = isLocal
+        ? 'http://localhost:3000/api'
+        : 'https://proyectmeluuu.onrender.com/api';
 
       console.log('[POST]', endpoint, 'to', apiUrl);
 
